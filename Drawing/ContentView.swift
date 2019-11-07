@@ -9,14 +9,8 @@ struct ContentView: View {
     var body: some View {
         ZStack {
             Image("PaulHudson")
-            
-            Rectangle()
-                .fill(Color.red)
-                .blendMode(.multiply)
+                .colorMultiply(.red)
         }
-        .frame(width: 400, height: 460)
-        .clipped()
-        
     }
 }
 

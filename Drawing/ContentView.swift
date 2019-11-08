@@ -12,6 +12,7 @@ struct Triangle: Shape {
         path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
         path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
         path.addLine(to: CGPoint(x: rect.midX, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
 
         return path
     }
@@ -19,13 +20,14 @@ struct Triangle: Shape {
 
 
 struct Arrow: Shape {
-    var headXScale: CGFloat = 1.0
-    var headYScale: CGFloat = 0.5
-    var shaftXScale: CGFloat = 1.0 / 3.0
+
+    private var headXScale: CGFloat = 1.0
+    private var headYScale: CGFloat = 0.5
+    private var shaftXScale: CGFloat = 1.0 / 3.0
     
     func path(in rect: CGRect) -> Path {
         var path = Path()
-        
+
         path.addPath(headPath(in: rect))
         path.addPath(shaftPath(in: rect))
         
@@ -37,6 +39,7 @@ struct Arrow: Shape {
     }
     
     private func shaftPath(in rect: CGRect) -> Path {
+
         let shaftWidth = rect.width * shaftXScale
         let shaftHeight = rect.height * (1 - headYScale)
 
@@ -49,13 +52,29 @@ struct Arrow: Shape {
 }
 
 struct ContentView: View {
+    @State private var thickness: CGFloat = 10.0
+    
     var body: some View {
         VStack {
             Spacer()
 
             Arrow()
+                .stroke(Color.red, lineWidth: thickness)
                 .frame(width: 200, height: 300)
 
+            Spacer()
+            
+            Button(action: {
+                withAnimation {
+                    if self.thickness > 40 {
+                        self.thickness = 1
+                    } else {
+                        self.thickness += 5
+                    }
+                }
+            }) {
+                Text("Animate")
+            }
             Spacer()
         }
     }

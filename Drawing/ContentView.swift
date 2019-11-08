@@ -4,77 +4,57 @@
 
 import SwiftUI
 
-struct Triangle: Shape {
-    func path(in rect: CGRect) -> Path {
-        var path = Path()
+struct ColorCyclingRectangle: View {
+    var amount = 0.0
+    var gradientPosition = 1.0
+    var steps = 100
 
-        path.move(to: CGPoint(x: rect.midX, y: rect.minY))
-        path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
-        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
-        path.addLine(to: CGPoint(x: rect.midX, y: rect.minY))
-        path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
-
-        return path
+    var body: some View {
+        let end = UnitPoint(x: UnitPoint.bottom.x,
+                            y: UnitPoint.bottom.y * CGFloat(self.gradientPosition))
+        return ZStack {
+            ForEach(0..<steps) { value in
+                Rectangle()
+                    .inset(by: CGFloat(value))
+                    .strokeBorder(LinearGradient(gradient: Gradient(colors: [
+                        self.color(for: value, brightness: 1),
+                        self.color(for: value, brightness: 0.5)
+                    ]), startPoint: .top, endPoint: end), lineWidth: 2)
+            }
+        }
+        .drawingGroup() // renders in offscreen image before putting on to screen as single rendered output (uses Metal)
     }
-}
 
+    func color(for value: Int, brightness: Double) -> Color {
+        var targetHue = Double(value) / Double(self.steps) + self.amount
 
-struct Arrow: Shape {
+        if targetHue > 1 {
+            targetHue -= 1
+        }
 
-    private var headXScale: CGFloat = 1.0
-    private var headYScale: CGFloat = 0.5
-    private var shaftXScale: CGFloat = 1.0 / 3.0
-    
-    func path(in rect: CGRect) -> Path {
-        var path = Path()
-
-        path.addPath(headPath(in: rect))
-        path.addPath(shaftPath(in: rect))
-        
-        return path
-    }
-    
-    private func headPath(in rect: CGRect) -> Path {
-        return Triangle().path(in: rect.divided(atDistance: rect.maxY * headYScale, from: .minYEdge).slice)
-    }
-    
-    private func shaftPath(in rect: CGRect) -> Path {
-
-        let shaftWidth = rect.width * shaftXScale
-        let shaftHeight = rect.height * (1 - headYScale)
-
-        return Rectangle().path(in:
-            CGRect(x: rect.minX + (rect.width / 2.0) - (shaftWidth / 2.0),
-                   y: rect.maxY - shaftHeight,
-                   width: shaftWidth,
-                   height: shaftHeight))
+        return Color(hue: targetHue, saturation: 1, brightness: brightness)
     }
 }
 
 struct ContentView: View {
-    @State private var thickness: CGFloat = 10.0
-    
+    @State private var colorCycle = 0.0
+    @State private var gradientPosition = 1.0
+
     var body: some View {
         VStack {
             Spacer()
 
-            Arrow()
-                .stroke(Color.red, lineWidth: thickness)
-                .frame(width: 200, height: 300)
+            ColorCyclingRectangle(amount: self.colorCycle,
+                                  gradientPosition: self.gradientPosition)
+                .frame(width: 300, height: 300)
 
             Spacer()
             
-            Button(action: {
-                withAnimation {
-                    if self.thickness > 40 {
-                        self.thickness = 1
-                    } else {
-                        self.thickness += 5
-                    }
-                }
-            }) {
-                Text("Animate")
-            }
+            Text("Color")
+            Slider(value: $colorCycle)
+            Spacer()
+            Text("Gradient Position")
+            Slider(value: $gradientPosition, in: 0...1, step: 0.1)
             Spacer()
         }
     }
